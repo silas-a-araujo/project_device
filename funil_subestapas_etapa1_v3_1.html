@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Google Sans', 'Helvetica Neue', Arial, sans-serif;
+  background: #F5F4F0; color: #333; padding: 24px; font-size: 13px;
+}
+h1 { color: #820AD1; font-size: 19px; font-weight: 700; margin-bottom: 4px; }
+.subtitle { color: #666; font-size: 12px; margin-bottom: 8px; }
+.caveat {
+  background: #fff8e1; border-left: 3px solid #E65C00;
+  padding: 8px 12px; font-size: 11px; color: #555;
+  margin-bottom: 20px; border-radius: 0 6px 6px 0;
+}
+
+.section-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.7px; color: #820AD1; margin: 20px 0 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-label::after { content:''; flex:1; height:1px; background:#e0d8ef; }
+
+/* Cards */
+.card { background:#fff; border-radius:10px; border:1px solid #ddd; margin-bottom:12px; overflow:hidden; }
+.card-header {
+  padding:10px 14px 8px; display:flex; align-items:flex-start; gap:8px;
+  cursor:pointer; user-select:none;
+}
+.card-header:hover { background:#faf8fd; }
+.card-icon { font-size:16px; flex-shrink:0; margin-top:1px; }
+.card-title { flex:1; }
+.card-name { font-weight:700; font-size:13px; color:#000; }
+.card-meta { font-size:10px; color:#777; margin-top:2px; }
+.card-tnps {
+  font-size:14px; font-weight:800; padding:3px 10px;
+  border-radius:10px; white-space:nowrap; flex-shrink:0;
+}
+.toggle { font-size:11px; color:#999; flex-shrink:0; margin-top:3px; }
+
+.card-body { padding:0 14px 0; max-height:0; overflow:hidden; transition:max-height 0.3s ease; }
+.card-body.open { max-height:600px; padding-bottom:12px; }
+
+/* Row types */
+.row { display:flex; align-items:center; gap:0; margin-bottom:1px; }
+
+/* Resolvido row */
+.row-resolved {
+  background:#f0faf5; border-radius:6px; padding:7px 10px;
+  margin-bottom:4px; display:flex; align-items:center; gap:8px;
+}
+.row-resolved .row-label { font-size:11px; font-weight:600; color:#007A4D; flex:1; }
+
+/* Não confirmado parent */
+.row-nc-parent {
+  background:#f9f9f9; border-radius:6px 6px 0 0;
+  padding:7px 10px 5px; margin-bottom:0;
+  display:flex; align-items:center; gap:8px;
+  border-bottom:1px dashed #e8e8e8;
+}
+.row-nc-parent .row-label { font-size:11px; font-weight:600; color:#555; flex:1; }
+
+/* Não confirmado children */
+.row-nc-child {
+  background:#f9f9f9; padding:5px 10px 5px 24px;
+  display:flex; align-items:center; gap:8px;
+}
+.row-nc-child:last-child { border-radius:0 0 6px 6px; margin-bottom:4px; }
+.row-nc-child .row-label { font-size:11px; color:#555; flex:1; }
+
+/* Bars */
+.bar-wrap { display:flex; align-items:center; gap:4px; }
+.bar-track { width:140px; height:9px; background:#eee; border-radius:3px; overflow:hidden; display:flex; flex-shrink:0; }
+.bar-p { background:#007A4D; height:100%; }
+.bar-n { background:#bbb; height:100%; }
+.bar-d { background:#c0392b; height:100%; }
+.bar-pcts { display:flex; gap:6px; font-size:10px; }
+.bp { color:#007A4D; font-weight:600; }
+.bn { color:#888; }
+.bd { color:#c0392b; font-weight:600; }
+.row-n { font-size:10px; color:#999; width:32px; text-align:right; flex-shrink:0; }
+
+/* tNPS chips */
+.chip { font-size:10px; font-weight:700; padding:2px 7px; border-radius:8px; white-space:nowrap; flex-shrink:0; }
+.chip-great { background:#c8f0dd; color:#005c36; }
+.chip-good  { background:#d5eaf3; color:#1a6b8a; }
+.chip-mid   { background:#fff3e0; color:#E65C00; }
+.chip-low   { background:#fde8e8; color:#c0392b; }
+.chip-neg   { background:#c0392b; color:#fff; }
+
+.tnps-great { background:#c8f0dd; color:#005c36; }
+.tnps-good  { background:#d5eaf3; color:#1a6b8a; }
+.tnps-mid   { background:#fff3e0; color:#E65C00; }
+.tnps-low   { background:#fde8e8; color:#c0392b; }
+.tnps-neg   { background:#c0392b; color:#fff; }
+
+/* Insights */
+.insights { background:#fff; border-radius:10px; border:2px solid #820AD1; padding:14px 16px; margin-top:16px; }
+.insights h4 { color:#820AD1; font-size:12px; font-weight:700; margin-bottom:10px; }
+.ins { display:flex; gap:8px; margin-bottom:8px; align-items:flex-start; }
+.ins-icon { font-size:14px; flex-shrink:0; }
+.ins-text { font-size:11px; color:#333; line-height:1.6; }
+.ins-text strong { color:#000; }
+.g { color:#007A4D; font-weight:700; }
+.o { color:#E65C00; font-weight:700; }
+.r { color:#c0392b; font-weight:700; }
+.pu { color:#820AD1; font-weight:700; }
+
+/* special groups */
+.mini { width:100%; border-collapse:collapse; background:#fff; border-radius:10px; overflow:hidden; border:1px solid #ddd; }
+.mini th { background:#f5f5f5; color:#666; font-size:10px; text-transform:uppercase; padding:6px 12px; border-bottom:1px solid #eee; text-align:left; }
+.mini td { padding:7px 12px; border-bottom:1px solid #f5f5f5; font-size:11px; }
+.mini tr:last-child td { border-bottom:none; }
+</style>
+</head>
+<body>
+
+<h1>Performance por Sub-etapa — Etapa 1 (Liveness)</h1>
+<p class="subtitle">others_auth_device · Etapa 1 pura · Maio/2026 · n=546 · faixa 1.500–8.000 chars</p>
+<div class="caveat">
+  <strong>Estrutura de cada sub-etapa:</strong>
+  &nbsp;✅ <strong>Resolvido</strong> = confirmação explícita no chat de que o device foi autorizado.
+  &nbsp;❌ <strong>Não confirmado</strong> = sem confirmação de desfecho, dividido em:
+  &nbsp;📭 <em>Sem retorno do cliente</em> — última mensagem é do agente (cliente não voltou a responder) |
+  &nbsp;❓ <em>Retornou inconclusivo</em> — cliente respondeu mas o chat terminou sem desfecho claro.
+</div>
+
+<div class="section-label">🎯 Grupo A — Liveness direto (sem troubleshooting técnico)</div>
+
+<!-- ORIENTAÇÃO LIVENESS -->
+<div class="card">
+  <div class="card-header" onclick="toggle(this)">
+    <span class="card-icon">🎯</span>
+    <div class="card-title">
+      <div class="card-name">Orientação de Liveness</div>
+      <div class="card-meta">Agente orientou posicionamento, iluminação e dicas de foto · n=58</div>
+    </div>
+    <span class="card-tnps tnps-great">+55%</span>
+    <span class="toggle">▼</span>
+  </div>
+  <div class="card-body open">
+    <!-- Resolvido -->
+    <div class="row-resolved">
+      <span class="row-label">✅ Resolvido no chat</span>
+      <span class="row-n">n=13</span>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-p" style="width:92%"></div><div class="bar-n" style="width:0%"></div><div class="bar-d" style="width:7%"></div></div>
+        <div class="bar-pcts"><span class="bp">92%</span><span class="bn">0%</span><span class="bd">7%</span></div>
+      </div>
+      <span class="chip chip-great">+85%</span>
+    </div>
+    <!-- Não confirmado -->
+    <div class="row-nc-parent">
+      <span class="row-label">❌ Não confirmado</span>
+      <span class="row-n">n=45</span>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-p" style="width:68%"></div><div class="bar-n" style="width:8%"></div><div class="bar-d" style="width:22%"></div></div>
+        <div class="bar-pcts"><span class="bp">68%</span><span class="bn">8%</span><span class="bd">22%</span></div>
+      </div>
+      <span class="chip chip-mid">+46%</span>
+    </div>
+    <div class="row-nc-child">
+      <span class="row-label">📭 Sem retorno do cliente</span>
+      <span class="row-n">n=43</span>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-p" style="width:67%"></div><div class="bar-n" style="width:9%"></div><div class="bar-d" style="width:23%"></div></div>
+        <div class="bar-pcts"><span class="bp">67%</span><span class="bn">9%</span><span class="bd">23%</span></div>
+      </div>
+      <span class="chip chip-mid">+44%</span>
+    </div>
+    <div class="row-nc-child">
+      <span class="row-label">❓ Retornou inconclusivo</span>
+      <span class="row-n">n=2</span>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-p" style="width:100%"></div><div class="bar-n" style="width:0%"></div><div class="bar-d" style="width:0%"></div></div>
+        <div class="bar-pcts"><span class="bp">100%</span><span class="bn">0%</span><span class="bd">0%</span></div>
+      </div>
+      <span class="chip chip-great">+100%</span>
+    </div>
+  </div>
+</div>
+
+<!-- LIVENESS MANDATÓRIO -->
+<div class="card">
+  <div class="card-header" onclick="toggle(this)">
+    <span class="card-icon">🔁</span>
+    <div class="card-title">
+      <div class="card-name">Liveness Mandatório (5 tentativas)</div>
+      <div class="card-meta">Grupo Treatment — 5 tentativas obrigatórias no mesmo challenge · n=58</div>
+    </div>
+    <span class="card-tnps tnps-great">+55%</span>
+    <span class="toggle">▶</span>
+  </div>
+  <div class="card-body">
+    <div class="row-resolved">
+      <span class="row-label">✅ Resolvido no chat</span>
+      <span class="row-n">n=19</span>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-p" style="width:78%"></div><div class="bar-n" style="width:0%"></div><div class="bar-d" style="width:21%"></div></div>
+        <div class="bar-pcts"><span class="bp">78%</span><span class="bn">0%</span><span class="bd">21%</span></div>
+      </div>
+      <span class="chip chip-great">+58%</span>
+    </div>
+    <div class="row-nc-parent">
+      <span class="row-label">❌ Não confirmado</span>
+      <span class="row-n">n=39</span>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-p" style="width:71%"></div><div class="bar-n" style="width:10%"></div><div class="bar-d" style="width:17%"></div></div>
+        <div class="bar-pcts"><span class="bp">71%</span><span class="bn">10%</span><span class="bd">17%</span></div>
+      </div>
+      <span class="chip chip-good">+54%</span>
+    </div>
+    <div class="row-nc-child">
+      <span class="row-label">📭 Sem retorno do cliente</span>
+      <span class="row-n">n=39</span>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-p" style="width:71%"></div><div class="bar-n" style="width:10%"></div><div class="bar-d" style="width:17%"></div></div>
+        <div class="bar-pcts"><span class="bp">71%</span><span class="bn">10%</span><span class="bd">17%</span></div>
+      </div>
+      <span class="chip chip-good">+54%</span>
+    </div>
+  </div>
+</div>
+
+<div class="section-label">🔧 Grupo B — Troubleshooting técnico (sequência do mais simples ao mais profundo)</div>
+
+<!-- REINICIAR -->
+<div class="card">
+  <div class="card-header" onclick="toggle(this)">
+    <span class="card-icon">📱</span>
+    <div class="card-title">
+      <div class="card-name">Reiniciar Celular</div>
+      <div class="card-meta">Desligar e ligar o aparelho — ação mais simples antes de reinstalar · n=7</div>
+    </div>
+    <span class="card-tnps tnps-mid">+29%</span>
+    <span class="toggle">▶</span>
+  </div>
+  <div class="card-body">
+    <div class="row-resolved">
+      <span class="row-label">✅ Resolvido no chat</span>
+      <span class="row-n">n=3</span>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-p" style="width:33%"></div><div class="bar-n" style="width:33%"></div><div class="bar-d" style="width:33%"></div></div>
+        <div class="bar-pcts"><span class="bp">33%</span><span class="bn">33%</span><span class="bd">33%</span></div>
+      </div>
+      <span class="chip chip-low">0%</span>
+    </div>
+    <div class="row-nc-parent" style="border-radius:6px">
+      <span class="row-label">❌ Não confirmado</span>
+      <span class="row-n">n=4</span>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-p" style="width:75%"></div><div class="bar-n" style="width:0%"></div><div class="bar-d" style="width:25%"></div></div>
+        <div class="bar-pcts"><span class="bp">75%</span><span class="bn">0%</span><span class="bd">25%</span></div>
+      </div>
+      <span class="chip chip-mid">+50%</span>
+    </div>
+    <div class="row-nc-child" style="border-radius:0 0 6px 6px;margin-bottom:4px">
+      <span class="row-label">📭 Sem retorno do cliente</span>
+      <span class="row-n">n=4</span>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-p" style="width:75%"></div><div class="bar-n" style="width:0%"></div><div class="bar-d" style="width:25%"></div></div>
+        <div class="bar-pcts"><span class="bp">75%</span><span class="bn">0%</span><span class="bd">25%</span></div>
+      </div>
+      <span class="chip chip-mid">+50%</span>
+    </div>
+  </div>
+</div>
+
+<!-- LIMPAR CACHE -->
+<div class="card">
+  <div class="card-header" onclick="toggle(this)">
+    <span class="card-icon">🧹</span>
+    <div class="card-title">
+      <div class="card-name">Limpar Cache / Dados</div>
+      <div class="card-meta">Forçar parada, limpar dados do app, trocar rede · n=46</div>
+    </div>
+    <span class="card-tnps tnps-mid">+41%</span>
+    <span class="toggle">▶</span>
+  </div>
+  <div class="card-body">
+    <div class="row-resolved">
+      <span class="row-label">✅ Resolvido no chat</span>
+      <span class="row-n">n=10</span>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-p" style="width:60%"></div><div class="bar-n" style="width:10%"></div><div class="bar-d" style="width:30%"></div></div>
+        <div class="bar-pcts"><span class="bp">60%</span><span class="bn">10%</span><span class="bd">30%</span></div>
+      </div>
+      <span class="chip chip-mid">+30%</span>
+    </div>
+    <div class="row-nc-parent" style="border-radius:6px">
+      <span class="row-label">❌ Não confirmado</span>
+      <span class="row-n">n=36</span>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-p" style="width:69%"></div><div class="bar-n" style="width:5%"></div><div class="bar-d" style="width:25%"></div></div>
+        <div class="bar-pcts"><span class="bp">69%</span><span class="bn">5%</span><span class="bd">25%</span></div>
+      </div>
+      <span class="chip chip-mid">+44%</span>
+    </div>
+    <div class="row-nc-child" style="border-radius:0 0 6px 6px;margin-bottom:4px">
+      <span class="row-label">📭 Sem retorno do cliente</span>
+      <span class="row-n">n=36</span>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-p" style="width:69%"></div><div class="bar-n" style="width:5%"></div><div class="bar-d" style="width:25%"></div></div>
+        <div class="bar-pcts"><span class="bp">69%</span><span class="bn">5%</span><span class="bd">25%</span></div>
+      </div>
+      <span class="chip chip-mid">+44%</span>
+    </div>
+  </div>
+</div>
+
+<!-- DESINSTALAR REINSTALAR -->
+<div class="card" style="border-color:#820AD1">
+  <div class="card-header" onclick="toggle(this)">
+    <span class="card-icon">🔄</span>
+    <div class="card-title">
+      <div class="card-name">Desinstalar / Reinstalar</div>
+      <div class="card-meta">App removido e reinstalado · n=137 · maior sub-grupo da Etapa 1</div>
+    </div>
+    <span class="card-tnps tnps-mid">+48%</span>
+    <span class="toggle">▶</span>
+  </div>
+  <div class="card-body">
+    <div class="row-resolved">
+      <span class="row-label">✅ Resolvido no chat</span>
+      <span class="row-n">n=29</span>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-p" style="width:72%"></div><div class="bar-n" style="width:6%"></div><div class="bar-d" style="width:20%"></div></div>
+        <div class="bar-pcts"><span class="bp">72%</span><span class="bn">6%</span><span class="bd">20%</span></div>
+      </div>
+      <span class="chip chip-good">+52%</span>
+    </div>
+    <div class="row-nc-parent">
+      <span class="row-label">❌ Não confirmado</span>
+      <span class="row-n">n=108</span>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-p" style="width:66%"></div><div class="bar-n" style="width:13%"></div><div class="bar-d" style="width:19%"></div></div>
+        <div class="bar-pcts"><span class="bp">66%</span><span class="bn">13%</span><span class="bd">19%</span></div>
+      </div>
+      <span class="chip chip-mid">+47%</span>
+    </div>
+    <div class="row-nc-child">
+      <span class="row-label">📭 Sem retorno do cliente</span>
+      <span class="row-n">n=106</span>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-p" style="width:66%"></div><div class="bar-n" style="width:14%"></div><div class="bar-d" style="width:19%"></div></div>
+        <div class="bar-pcts"><span class="bp">66%</span><span class="bn">14%</span><span class="bd">19%</span></div>
+      </div>
+      <span class="chip chip-mid">+46%</span>
+    </div>
+    <div class="row-nc-child">
+      <span class="row-label">❓ Retornou inconclusivo</span>
+      <span class="row-n">n=2</span>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-p" style="width:100%"></div><div class="bar-n" style="width:0%"></div><div class="bar-d" style="width:0%"></div></div>
+        <div class="bar-pcts"><span class="bp">100%</span><span class="bn">0%</span><span class="bd">0%</span></div>
+      </div>
+      <span class="chip chip-great">+100%</span>
+    </div>
+  </div>
+</div>
+
+<div class="section-label">⚠️ Grupos especiais</div>
+<table class="mini">
+  <tr>
+    <th>Grupo</th><th style="width:45px;text-align:center">n</th>
+    <th style="width:55px;text-align:center">Prom%</th>
+    <th style="width:50px;text-align:center">Neut%</th>
+    <th style="width:55px;text-align:center">Detr%</th>
+    <th style="width:75px;text-align:center">tNPS</th>
+    <th>Observação</th>
+  </tr>
+  <tr>
+    <td>🚫 Foto de Terceiros / Fraude</td><td style="text-align:center">46</td>
+    <td style="text-align:center;color:#007A4D;font-weight:600">28%</td>
+    <td style="text-align:center;color:#888">19%</td>
+    <td style="text-align:center;color:#c0392b;font-weight:600">52%</td>
+    <td style="text-align:center"><span class="chip chip-neg" style="font-size:11px">-24%</span></td>
+    <td style="font-size:11px;color:#555">Estrutural. Isolar na análise de performance de agente.</td>
+  </tr>
+  <tr>
+    <td>🚨 Root / Spoofing</td><td style="text-align:center">8</td>
+    <td style="text-align:center;color:#007A4D;font-weight:600">50%</td>
+    <td style="text-align:center;color:#888">12%</td>
+    <td style="text-align:center;color:#c0392b;font-weight:600">37%</td>
+    <td style="text-align:center"><span class="chip chip-low" style="font-size:11px">+12%</span></td>
+    <td style="font-size:11px;color:#555">Volume baixo. Bloqueio de segurança gera frustração esperada.</td>
+  </tr>
+  <tr>
+    <td>🔒 Bloqueio de Certificado</td><td style="text-align:center">8</td>
+    <td style="text-align:center;color:#007A4D;font-weight:600">75%</td>
+    <td style="text-align:center;color:#888">0%</td>
+    <td style="text-align:center;color:#c0392b;font-weight:600">25%</td>
+    <td style="text-align:center"><span class="chip chip-good" style="font-size:11px">+50%</span></td>
+    <td style="font-size:11px;color:#555">Amostra pequena. Inconclusivo.</td>
+  </tr>
+  <tr>
+    <td>📷 Problema na Foto de Cadastro</td><td style="text-align:center">5</td>
+    <td style="text-align:center;color:#007A4D;font-weight:600">60%</td>
+    <td style="text-align:center;color:#888">0%</td>
+    <td style="text-align:center;color:#c0392b;font-weight:600">40%</td>
+    <td style="text-align:center"><span class="chip chip-low" style="font-size:11px">+20%</span></td>
+    <td style="font-size:11px;color:#555">Aguarda ação do time de Growth (72h). Gera frustração.</td>
+  </tr>
+  <tr>
+    <td>🔍 Sem sub-etapa clara</td><td style="text-align:center">191</td>
+    <td style="text-align:center;color:#007A4D;font-weight:600">68%</td>
+    <td style="text-align:center;color:#888">8%</td>
+    <td style="text-align:center;color:#c0392b;font-weight:600">22%</td>
+    <td style="text-align:center"><span class="chip chip-mid" style="font-size:11px">+46%</span></td>
+    <td style="font-size:11px;color:#555">Linguagem fora do padrão. Vale inspeção amostral separada.</td>
+  </tr>
+</table>
+
+
+<div class="section-label">🔍 Detalhamento — "Sem sub-etapa clara" (n=156)</div>
+
+<!-- SEM SUB-ETAPA CLARA CARD -->
+<div class="card" style="border-color:#aaa">
+  <div class="card-header" onclick="toggle(this)" style="background:#f9f9f9">
+    <span class="card-icon">🔍</span>
+    <div class="card-title">
+      <div class="card-name">Sem sub-etapa clara</div>
+      <div class="card-meta">Atendimentos de Etapa 1 sem frases-chave identificáveis · n=156 · tNPS geral +46% · aberto em 6 sub-categorias abaixo</div>
+    </div>
+    <span class="card-tnps" style="background:#f0f0f0;color:#555">+46%</span>
+    <span class="toggle">▼</span>
+  </div>
+  <div class="card-body open">
+
+    <!-- Sub 1: Linguagem informal -->
+    <div class="row-resolved" style="background:#f0fdf4;border:1px solid #bbf7d0">
+      <span class="row-label" style="color:#166534">🟢 Orientação liveness — linguagem informal (não capturada)</span>
+      <span class="row-n">n=30</span>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-p" style="width:83%"></div><div class="bar-n" style="width:6%"></div><div class="bar-d" style="width:10%"></div></div>
+        <div class="bar-pcts"><span class="bp">83%</span><span class="bn">6%</span><span class="bd">10%</span></div>
+      </div>
+      <span class="chip chip-great">+73%</span>
+    </div>
+    <div style="font-size:10px;color:#555;padding:2px 10px 6px 12px;font-style:italic">São atendimentos legítimos de device auth onde o agente orientou liveness com linguagem fora do padrão das macros — ex: "tenta tirar a foto de novo", "foto nítida". Não foram capturados pelas frases-chave. <strong>tNPS altíssimo (+73%)</strong> — os melhores do grupo. Esses casos deveriam ser contabilizados em "Orientação Liveness".</div>
+
+    <!-- Sub 2: Resolvido espontaneamente -->
+    <div class="row-resolved" style="background:#f0f9ff;border:1px solid #bae6fd">
+      <span class="row-label" style="color:#0369a1">💡 Resolvido espontaneamente (antes ou sem ação do agente)</span>
+      <span class="row-n">n=17</span>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-p" style="width:70%"></div><div class="bar-n" style="width:17%"></div><div class="bar-d" style="width:11%"></div></div>
+        <div class="bar-pcts"><span class="bp">70%</span><span class="bn">17%</span><span class="bd">11%</span></div>
+      </div>
+      <span class="chip chip-great">+59%</span>
+    </div>
+    <div style="font-size:10px;color:#555;padding:2px 10px 6px 12px;font-style:italic">Cliente abriu o chat, mas enquanto aguardava ou logo no início do atendimento resolveu sozinho — ex: <em>"já deu certo, obrigado"</em>, <em>"consegui agorinha"</em>. <strong>tNPS alto (+59%)</strong> — não há ação do agente a analisar. Volume gera tNPS "de graça" para o squad.</div>
+
+    <!-- Sub 3: Device auth sem padrão -->
+    <div class="row-nc-parent" style="border-radius:6px">
+      <span class="row-label">🔵 Device auth sem padrão identificável</span>
+      <span class="row-n">n=57</span>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-p" style="width:68%"></div><div class="bar-n" style="width:7%"></div><div class="bar-d" style="width:24%"></div></div>
+        <div class="bar-pcts"><span class="bp">68%</span><span class="bn">7%</span><span class="bd">24%</span></div>
+      </div>
+      <span class="chip chip-mid">+44%</span>
+    </div>
+    <div style="font-size:10px;color:#555;padding:2px 10px 6px 12px;font-style:italic;margin-bottom:4px">São atendimentos de device auth onde o agente conduziu de forma muito atípica ou com linguagem muito diversa das macros. Necessitam de inspeção manual adicional para categorizar com precisão.</div>
+
+    <!-- Sub 4: Câmera com problema sem encaminhamento -->
+    <div class="row-nc-parent" style="border-radius:6px">
+      <span class="row-label">📷 Câmera com problema — sem encaminhamento claro</span>
+      <span class="row-n">n=13</span>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-p" style="width:61%"></div><div class="bar-n" style="width:7%"></div><div class="bar-d" style="width:30%"></div></div>
+        <div class="bar-pcts"><span class="bp">61%</span><span class="bn">7%</span><span class="bd">30%</span></div>
+      </div>
+      <span class="chip chip-mid">+31%</span>
+    </div>
+    <div style="font-size:10px;color:#555;padding:2px 10px 6px 12px;font-style:italic;margin-bottom:4px">Cliente relatou câmera frontal quebrada/estragada mas o atendimento <strong>não escalou para Etapa 3</strong> — o agente não usou as frases de câmera quebrada nem iniciou o fluxo de foto com código. Possível desvio de processo. <span style="color:#c0392b;font-weight:600">tNPS +31%</span> — bem abaixo do esperado.</div>
+
+    <!-- Sub 5: Atendimento misto -->
+    <div class="row-nc-parent" style="border-radius:6px">
+      <span class="row-label">⚡ Atendimento misto (device auth + outro assunto)</span>
+      <span class="row-n">n=38</span>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-p" style="width:52%"></div><div class="bar-n" style="width:5%"></div><div class="bar-d" style="width:42%"></div></div>
+        <div class="bar-pcts"><span class="bp">52%</span><span class="bn">5%</span><span class="bd">42%</span></div>
+      </div>
+      <span class="chip chip-low">+11%</span>
+    </div>
+    <div style="font-size:10px;color:#555;padding:2px 10px 6px 12px;font-style:italic;margin-bottom:4px">Cliente entrou com outro assunto (fatura, pix, limite) mas também mencionou problema com device auth. O agente resolveu um dos temas mas nem sempre os dois. <strong style="color:#c0392b">tNPS crítico +11%</strong> — o pior sub-grupo desta seção. O cliente saiu com pelo menos um problema não resolvido.</div>
+
+    <!-- Sub 6: Fora do escopo -->
+    <div class="row-nc-parent" style="border-radius:6px;margin-bottom:4px">
+      <span class="row-label">🚫 Fora do escopo (não é device auth)</span>
+      <span class="row-n">n=1</span>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-p" style="width:0%"></div><div class="bar-n" style="width:100%"></div><div class="bar-d" style="width:0%"></div></div>
+        <div class="bar-pcts"><span class="bp">0%</span><span class="bn">100%</span><span class="bd">0%</span></div>
+      </div>
+      <span class="chip" style="background:#f0f0f0;color:#555">0%</span>
+    </div>
+    <div style="font-size:10px;color:#555;padding:2px 10px 10px 12px;font-style:italic">Volume residual (n=1). Atendimento sem relação com device auth classificado incorretamente como others_auth_device.</div>
+
+  </div>
+</div>
+
+<!-- INSIGHTS -->
+<div class="insights">
+  <h4>🔍 Principais achados — Etapa 1</h4>
+  <div class="ins">
+    <span class="ins-icon">✅</span>
+    <span class="ins-text"><strong>Hipótese confirmada:</strong> Desinstalar/Reinstalar quando resolvido no chat = <span class="g">+52%</span> tNPS, bem acima do não confirmado (<span class="o">+47%</span>). O padrão se repete em todas as sub-etapas — confirmar o desfecho sempre melhora o tNPS.</span>
+  </div>
+  <div class="ins">
+    <span class="ins-icon">📭</span>
+    <span class="ins-text"><strong>106 dos 108 "não confirmados" do Desinstalar/Reinstalar são "Sem retorno do cliente"</strong> — ou seja, o agente enviou as instruções e o cliente não voltou. O tNPS desse grupo é <span class="o">+46%</span>. A questão é: quantos desses clientes foram tentar reinstalar, não conseguiram, e desistiram? Esse é o risco oculto dessa sub-etapa.</span>
+  </div>
+  <div class="ins">
+    <span class="ins-icon">🎯</span>
+    <span class="ins-text"><strong>Orientação de Liveness é o melhor ponto quando resolvido (<span class="g">+85%</span>)</strong>, mas dos 58 casos, apenas 13 têm confirmação. A maioria (43) é "sem retorno" — o cliente foi tentar a selfie e não voltou para confirmar. Agente aguardar e confirmar ativamente pode mover esse grupo.</span>
+  </div>
+  <div class="ins">
+    <span class="ins-icon">🚫</span>
+    <span class="ins-text"><strong>Foto de Terceiros/Fraude (n=46, tNPS <span class="r">-24%</span>) contamina o tNPS geral da Etapa 1.</strong> Recomenda-se isolar esse grupo nas métricas de performance dos agentes — não é algo que o agente possa melhorar.</span>
+  </div>
+</div>
+
+<script>
+function toggle(header) {
+  const body = header.nextElementSibling;
+  const icon = header.querySelector('.toggle');
+  const open = body.classList.toggle('open');
+  icon.textContent = open ? '▼' : '▶';
+}
+</script>
+</body>
+</html>
+<script>
+// Inject the sem_sub section before the insights div
+document.addEventListener('DOMContentLoaded', function() {
+  // find the insights div and insert before it
+});
+</script>
